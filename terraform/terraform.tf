@@ -1,7 +1,7 @@
 terraform {
 
   cloud {
-    organization = "tf-se-test"
+    organization = "tf-se-test" # replace with your org
 
     workspaces {
       name = "aws-documentdb"

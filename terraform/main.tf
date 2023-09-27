@@ -184,11 +184,3 @@ resource "aws_key_pair" "ssh" {
   key_name   = "ssh-key"
   public_key = file("~/.ssh/id_rsa.pub") # ensure you have the public key at this location or modify the path.
 }
-
-
-# why is this needed? might not be needed 
-# resource "aws_route" "peering_route" {
-#   route_table_id            = aws_route_table.public_route_table.id
-#   destination_cidr_block    = "172.25.16.0/20"
-#   vpc_peering_connection_id = "pcx-066a99016a146d471"
-# }
