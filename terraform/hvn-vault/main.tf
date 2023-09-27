@@ -2,7 +2,7 @@
 resource "hcp_hvn" "hcp-vault-hvn-example" {
   hvn_id         = "hcp-vault-hvn-example"
   cloud_provider = "aws"
-  region         = var.region
+  region         = var.aws_region
   cidr_block     = var.hvn_cidr
 }
 

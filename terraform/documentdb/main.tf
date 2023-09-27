@@ -60,7 +60,7 @@ resource "aws_security_group" "docdb_sg" {
     from_port   = 27017
     to_port     = 27017
     protocol    = "tcp"
-    cidr_blocks = ["172.25.16.0/20"] # Replace with your HVN CIDR block - see HCP console
+    cidr_blocks = [var.hvn_cidr] # your HVN CIDR block - see HCP console
   }
 
   egress {
