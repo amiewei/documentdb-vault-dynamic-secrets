@@ -153,7 +153,7 @@ resource "aws_instance" "bastion_host" {
               systemctl enable apache2
 
               # install gnupg and curl
-              apt-get install -y gnupg curl
+              apt-get install -y gnupg curl wget
 
               # Install Mongosh Shell for Ubuntu Focal
               # https://www.mongodb.com/docs/mongodb-shell/install/
@@ -168,6 +168,10 @@ resource "aws_instance" "bastion_host" {
 
               # Check mongosh version
               mongosh --version
+
+              # download pem for AWS SSL/TLS
+              cd /home/ubuntu
+              wget https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem
 
               EOF
   tags = {

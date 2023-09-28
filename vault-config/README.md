@@ -11,7 +11,7 @@ docker build -t db-configure-vault:latest .
 export VAULT_ADDR=<vault-cluster-address>
 export VAULT_NAMESPACE=<admin>
 export VAULT_TOKEN=<very-secret-auth-token>
-export DB_CLUSTER_ADDR=<addr-from-terraform-output>
+export DB_CLUSTER_ADDR=<endpoint-from-terraform-output>
 ```
 
 <h5>3. Run container</h5>

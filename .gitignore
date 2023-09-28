@@ -8,8 +8,11 @@
 **/dist
 **/.terraform.lock.hcl
 **/.terraform/
+**/*.tfstate*
 **/*.pem
 TODO.md
 **/venv
 **/.pluralith
 vault-config-deprecated/
+terraform-module/
+READMEOLD.md
