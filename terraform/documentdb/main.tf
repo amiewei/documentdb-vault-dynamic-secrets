@@ -1,19 +1,14 @@
-provider "aws" {
-  region = var.aws_region
-}
-
-# VPC and Subnets
-resource "aws_vpc" "my_vpc" {
-  cidr_block           = "10.0.0.0/16"
-  enable_dns_support   = true # Enable DNS support
-  enable_dns_hostnames = true # Enable DNS hostnames
-  tags = {
-    Name = "my-vpc"
+# Reference the VPC that was created in the networking layer
+data "aws_vpc" "my_vpc" {
+  filter {
+    name   = "tag:Name"
+    values = ["my-vpc"]
   }
 }
 
+# Create public and private subnets
 resource "aws_subnet" "public_subnet" {
-  vpc_id                  = aws_vpc.my_vpc.id
+  vpc_id                  = data.aws_vpc.my_vpc.id
   cidr_block              = "10.0.100.0/24"
   availability_zone       = "${var.aws_region}a"
   map_public_ip_on_launch = true
@@ -22,13 +17,25 @@ resource "aws_subnet" "public_subnet" {
   }
 }
 
-# Internet Gateway and Route Table
+resource "aws_subnet" "private_subnet" {
+  count = length(var.private_subnets)
+
+  vpc_id                  = data.aws_vpc.my_vpc.id
+  cidr_block              = var.private_subnets[count.index].cidr_block
+  availability_zone       = "${var.aws_region}${var.private_subnets[count.index].availability_zone}"
+  map_public_ip_on_launch = false
+  tags = {
+    Name = var.private_subnets[count.index].name
+  }
+}
+
+# Create Internet Gateway and Route Table
 resource "aws_internet_gateway" "igw" {
-  vpc_id = aws_vpc.my_vpc.id
+  vpc_id = data.aws_vpc.my_vpc.id
 }
 
 resource "aws_route_table" "public_route_table" {
-  vpc_id = aws_vpc.my_vpc.id
+  vpc_id = data.aws_vpc.my_vpc.id
 
   route {
     cidr_block = "0.0.0.0/0"
@@ -42,9 +49,9 @@ resource "aws_route_table_association" "public_subnet_association" {
 }
 
 
-# DocumentDB and security group (Deploy DocumentDB inside the private subnet)
+# Create DocumentDB and security group (Deploy DocumentDB inside the private subnet)
 resource "aws_security_group" "docdb_sg" {
-  vpc_id      = aws_vpc.my_vpc.id
+  vpc_id      = data.aws_vpc.my_vpc.id
   name        = "DocumentDB Security Group"
   description = "Security group for DocumentDB"
 
@@ -71,7 +78,7 @@ resource "aws_security_group" "docdb_sg" {
   }
 }
 
-# DocumentDB cluster with 2 nodes spanning 2 AZs
+# Create DocumentDB cluster with 2 nodes spanning 2 AZs
 resource "aws_docdb_cluster" "docdb" {
   cluster_identifier      = "my-docdb-cluster"
   master_username         = "root"
@@ -94,19 +101,8 @@ resource "aws_docdb_cluster_instance" "docdb_node" {
   }
 }
 
-resource "aws_subnet" "private_subnet" {
-  count = length(var.private_subnets)
 
-  vpc_id                  = aws_vpc.my_vpc.id
-  cidr_block              = var.private_subnets[count.index].cidr_block
-  availability_zone       = "${var.aws_region}${var.private_subnets[count.index].availability_zone}"
-  map_public_ip_on_launch = false
-  tags = {
-    Name = var.private_subnets[count.index].name
-  }
-}
-
-# DocumentDB subnet group
+# Create DocumentDB subnet group
 resource "aws_docdb_subnet_group" "my_docdb_subnet_group" {
   name       = "my-docdb-subnet-group"
   subnet_ids = aws_subnet.private_subnet[*].id
@@ -116,9 +112,9 @@ resource "aws_docdb_subnet_group" "my_docdb_subnet_group" {
   }
 }
 
-# Bastion host in public subnet
+# Create Bastion host in public subnet
 resource "aws_security_group" "bastion_sg" {
-  vpc_id      = aws_vpc.my_vpc.id
+  vpc_id      = data.aws_vpc.my_vpc.id
   name        = "Bastion Security Group"
   description = "Security group for Bastion host"
 
@@ -130,16 +126,15 @@ resource "aws_security_group" "bastion_sg" {
   }
 
   egress {
-    from_port = 0
-    to_port   = 0
-    protocol  = "-1"
-    # cidr_blocks = ["0.0.0.0/0", "172.25.16.0/20"]
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
 }
 
 resource "aws_instance" "bastion_host" {
-  ami                    = "ami-053b0d53c279acc90" # free tier ubuntu AMI
+  ami                    = data.aws_ami.ubuntu_ami.id
   instance_type          = "t2.micro"
   key_name               = aws_key_pair.ssh.key_name
   vpc_security_group_ids = [aws_security_group.bastion_sg.id]
@@ -157,21 +152,22 @@ resource "aws_instance" "bastion_host" {
               systemctl start apache2
               systemctl enable apache2
 
-              # https://www.mongodb.com/docs/manual/tutorial/install-mongodb-on-ubuntu/
-              # Install MongoDB Community Edition 
+              # install gnupg and curl
               apt-get install -y gnupg curl
-              curl -fsSL https://pgp.mongodb.com/server-7.0.asc | sudo gpg --dearmor -o /usr/share/keyrings/mongodb-server-7.0.gpg
-              echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-7.0.gpg ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-7.0.list
+
+              # Install Mongosh Shell for Ubuntu Focal
+              # https://www.mongodb.com/docs/mongodb-shell/install/
+
+              # Create the /etc/apt/sources.list.d/mongodb-org-7.0.list file for Ubuntu 20.04 (Focal)
+              wget -qO- https://www.mongodb.org/static/pgp/server-7.0.asc | sudo tee /etc/apt/trusted.gpg.d/server-7.0.asc
+              echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu focal/mongodb-org/7.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-7.0.list
+
+              # Reload local package and install mongosh
               apt-get update
-              apt-get install -y mongodb-org
+              apt-get install -y mongodb-mongosh
 
-              # download pem for SSL/TLS
-              apt-get install -y wget
-              cd /home/ubuntu
-              wget https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem
-
-              # Start MongoDB
-              systemctl start mongod
+              # Check mongosh version
+              mongosh --version
 
               EOF
   tags = {
@@ -179,7 +175,7 @@ resource "aws_instance" "bastion_host" {
   }
 }
 
-# Public key for ssh. Run ssh keygen to generate key first
+# Create public key for ssh. Run ssh keygen to generate key first
 resource "aws_key_pair" "ssh" {
   key_name   = "ssh-key"
   public_key = file("~/.ssh/id_rsa.pub") # ensure you have the public key at this location or modify the path.

@@ -3,7 +3,7 @@
 variable "aws_region" {
   description = "AWS Region to deploy to"
   type        = string
-  default     = "us-east-1"
+  default     = "us-east-1" # need to match the AWS VPC for DocumentDB created in networking
 }
 
 variable "project_name" {
@@ -31,4 +31,5 @@ variable "private_subnets" {
 variable "hvn_cidr" {
   type        = string
   description = "CIDR block of the HVN to create for the Vault cluster"
+  default     = "172.25.16.0/20"
 }

@@ -1,11 +1,11 @@
 terraform {
-  cloud {
-    organization = "tf-se-test"
+  # cloud {
+  #   organization = "tf-se-test"
 
-    workspaces {
-      name = "vault-documentdb-dynamic-secrets"
-    }
-  }
+  #   workspaces {
+  #     name = "create-vpc-peering"
+  #   }
+  # }
 
   required_providers {
     hcp = {
@@ -23,3 +23,10 @@ terraform {
   required_version = ">= 1.0"
 }
 
+provider "aws" {
+  region = var.aws_region
+}
+
+provider "hcp" {
+
+}
