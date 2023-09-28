@@ -39,9 +39,6 @@ Click [HERE](https://www.hashicorp.com/cloud) to sign up for HashiCorp Cloud Pla
 
 <h3> Act 1 - Deploy DocumentDB Cluster with Bastion Host</h3>
 
-Deploy the following architecture in AWS using Terraform Cloud (diagram generated based on Terraform using Pluralith)
-![AWS Architecture Diagram](./architecture_digram.png)
-
 <h5> 1.1 Generate SSH key pair </h5>
 
 Generate SSH key pair and save your key pair locally. You will be prompted to enter filepath in which to save the key (/Users/yourusername/.ssh/id_rsa). Press "Enter" to accept the default location (~/.ssh/id_rsa).
