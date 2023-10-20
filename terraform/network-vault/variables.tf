@@ -4,12 +4,6 @@ variable "aws_region" {
   default     = "us-east-1"
 }
 
-# variable "aws_region_hvn" {
-#   type        = string
-#   description = "The AWS region for HVN"
-#   default     = "us-east-2"
-# }
-
 variable "aws_cidr" {
   type        = string
   description = "CIDR block of the AWS VPC for DocumentDB resources"

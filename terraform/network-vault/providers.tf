@@ -1,21 +1,21 @@
 terraform {
-  # cloud {
-  #   organization = "tf-se-test"
+  cloud {
+    organization = "tf-se-test"
 
-  #   workspaces {
-  #     name = "create-vpc-peering"
-  #   }
-  # }
+    workspaces {
+      name = "aws-network-hcp-vault"
+    }
+  }
 
   required_providers {
     hcp = {
       source  = "hashicorp/hcp"
-      version = "~> 0.71.1"
+      version = "0.71.1"
     }
 
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 4.0"
+      version = "4.67.0"
     }
 
   }
